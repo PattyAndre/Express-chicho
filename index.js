@@ -1,11 +1,15 @@
 const express = require("express");
+
 const { BINGO_RANGE } = require("./data");
 
 const app = express();
 const port = 3000;
 
+app.use(express.json());
+
 const maxNumber = 75;
 let numbersPool = [];
+let calledNumbers = [];
 let remainingNumbersToCall = maxNumber - 1;
 
 const shuffleArray = (a) => {
@@ -36,6 +40,21 @@ const generateRandomNumbersInRange = (min, max, count) => {
     }
 
     result.push(number);
+  }
+
+  return result;
+};
+
+const validateBingoColumn = (columnArray) => {
+  let result = true;
+
+  for (let index = 0; index < columnArray.length; index++) {
+    const number = columnArray[index];
+
+    if (!calledNumbers.includes(number)) {
+      result = false;
+      break;
+    }
   }
 
   return result;
@@ -77,11 +96,40 @@ app.get("/callNumber", (req, res) => {
 
   numbersPool = numbersPool.filter((number) => number != calledNumber);
   remainingNumbersToCall--;
+  calledNumbers.push(calledNumber);
 
   console.log(numbersPool);
   console.log(remainingNumbersToCall);
 
   res.json({ number: calledNumber });
+});
+
+app.post("/checkBingoCard", (req, res) => {
+  const { bingoCard } = req.body;
+
+  //check every card column
+
+  const isBColumnValid = validateBingoColumn(bingoCard.b);
+
+  if (!isBColumnValid) res.json({ message: "Is not a winner card yet" });
+
+  const isIColumnValid = validateBingoColumn(bingoCard.i);
+
+  if (!isIColumnValid) res.json({ message: "Is not a winner card yet" });
+
+  const isNColumnValid = validateBingoColumn(bingoCard.n);
+
+  if (!isNColumnValid) res.json({ message: "Is not a winner card yet" });
+
+  const isGColumnValid = validateBingoColumn(bingoCard.g);
+
+  if (!isGColumnValid) res.json({ message: "Is not a winner card yet" });
+
+  const isOColumnValid = validateBingoColumn(bingoCard.o);
+
+  if (!isOColumnValid) res.json({ message: "Is not a winner card yet" });
+
+  res.json({ message: "This is a winner card!" });
 });
 
 app.listen(port, () => {
